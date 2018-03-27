@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+          http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+          http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+          http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+          http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder location="classpath:db.properties"/>
+
+    <!-- 扫描注解Bean -->
+    <context:component-scan base-package="com.tanoak">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!-- 开启AOP监听 只对当前配置文件有效 -->
+    <!--<aop:aspectj-autoproxy expose-proxy="true"/>-->
+
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${MysqldriverClassName}"/>
+        <property name="url" value="${Mysqlurl}"/>
+        <property name="username" value="${MysqluserName}"/>
+        <property name="password" value="${Mysqlpassword}"/>
+        <!--initialSize: 初始化连接-->
+        <property name="initialSize" value="8"/>
+        <!--minIdle: 最小空闲连接-->
+        <property name="minIdle" value="6"/>
+        <!--maxActive: 最大连接数量-->
+        <property name="maxActive" value="50"/>
+        <!--最大连接等待时间(ms)-->
+        <property name="maxWait" value="1000"/>
+        <!--默认从连接池取连接时检测其可用性，放回连接池时不做监测-->
+        <property name="validationQuery" value="SELECT 1" />
+        <!-- 配置监控统计拦截的filters -->
+        <property name="filters" value="stat" />
+    </bean>
+    <!-- mybatis-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="dataSource"/>
+	    <!-- 自动扫描mapping.xml文件 -->
+         <property name="mapperLocations" value="classpath:mapper/*.xml"></property>
+    </bean>
+    <!-- DAO接口所在包名，Spring会自动查找其下的类 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.tanoak.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager" />
+     <import resource="classpath:shiro-base.xml"/>
+</beans>
